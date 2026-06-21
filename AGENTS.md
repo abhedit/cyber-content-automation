@@ -34,28 +34,37 @@ Abhedit
 * Clear
 * Modern
 
-## Carousel Structure
+## Carousel Rules
+
+Each slide must contain:
+
+* Maximum 30 words
+* Large readable text
+* One key message only
+* Suitable for Instagram and LinkedIn carousel format
 
 ### Slide 1
 
-Breaking Cybersecurity News
+Headline only
 
 ### Slide 2
 
-What Happened
+What happened?
 
 ### Slide 3
 
-Key Findings
+Why it matters?
 
 ### Slide 4
 
-Business Impact
+Business impact
 
 ### Slide 5
 
-Recommendations
+Security recommendations
 
 ### Slide 6
 
-Follow Abhedit
+Call to action
+
+Follow Abhedit for cybersecurity insights.
