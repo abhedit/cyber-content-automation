@@ -1,41 +1,46 @@
 import os
 from datetime import datetime
-from openai import OpenAI
+import google.generativeai as genai
 
-client = OpenAI(
-    api_key=os.environ["OPENAI_API_KEY"]
-)
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-MODEL = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 prompt = """
 You are Abhedit's cybersecurity content creator.
 
 Create:
 
-1. Cybersecurity headline
-2. LinkedIn post
-3. Instagram caption
-4. 10 hashtags
+1. Cybersecurity Headline
+2. LinkedIn Post
+3. Facebook Post
+4. Instagram Caption
+5. 20 Hashtags
+
+Audience:
+- CISOs
+- Security Architects
+- Security Engineers
+- GRC Teams
+- Privacy Professionals
+
+Tone:
+Professional
+Business-focused
+Actionable
 
 Topic:
-Latest cybersecurity threat trends.
-
-Professional tone.
-Business focused.
+Latest cybersecurity threat trends and enterprise security risks.
 """
 
-response = client.responses.create(
-    model=MODEL,
-    input=prompt
-)
+response = model.generate_content(prompt)
 
-content = response.output_text
+content = response.text
 
 os.makedirs("output", exist_ok=True)
 
 with open("output/content.md", "w", encoding="utf-8") as f:
-    f.write(f"# Abhedit Daily Content\n\n")
+    f.write("# Abhedit Daily Cybersecurity Content\n\n")
     f.write(f"Generated on: {datetime.utcnow()}\n\n")
     f.write(content)
 
