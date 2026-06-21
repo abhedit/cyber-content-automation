@@ -39,16 +39,26 @@ Select the single most important cybersecurity story from these headlines:
 
 {news_text}
 
-Create:
+Output EXACTLY in this format:
 
-1. Story Selection Reason
-2. Source Headline
-3. 6 Slide Carousel
-4. LinkedIn Post
-5. Facebook Post
-6. Instagram Caption
-7. 20 Hashtags
-8. 6 Image Prompts
+===CAROUSEL===
+[6 slide carousel here]
+
+===LINKEDIN===
+[linkedin post here]
+
+===FACEBOOK===
+[facebook post here]
+
+===INSTAGRAM===
+[instagram caption here]
+
+===HASHTAGS===
+[20 hashtags here]
+
+===IMAGE_PROMPTS===
+[6 image prompts here]
+
 
 Audience:
 - CISOs
