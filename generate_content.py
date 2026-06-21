@@ -81,8 +81,24 @@ content = response.text
 os.makedirs("output", exist_ok=True)
 
 with open("output/content.md", "w", encoding="utf-8") as f:
-    f.write("# Abhedit Daily Cybersecurity Content\n\n")
-    f.write(f"Generated on: {datetime.utcnow()}\n\n")
+    f.write(content)
+
+with open("output/carousel.md", "w", encoding="utf-8") as f:
+    f.write(content)
+
+with open("output/linkedin.md", "w", encoding="utf-8") as f:
+    f.write(content)
+
+with open("output/facebook.md", "w", encoding="utf-8") as f:
+    f.write(content)
+
+with open("output/instagram.md", "w", encoding="utf-8") as f:
+    f.write(content)
+
+with open("output/hashtags.md", "w", encoding="utf-8") as f:
+    f.write(content)
+
+with open("output/image_prompts.md", "w", encoding="utf-8") as f:
     f.write(content)
 
 print("Content generated successfully.")
