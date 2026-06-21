@@ -122,4 +122,3 @@ for filename in files:
         f.write(content)
 
 print("Content generated successfully.")
-```
