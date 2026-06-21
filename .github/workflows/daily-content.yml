@@ -1,36 +1,44 @@
 name: Daily Cybersecurity Content
 
 on:
-  workflow_dispatch:
+workflow_dispatch:
 
 permissions:
-  contents: write
+contents: write
 
 jobs:
-  generate-content:
-    runs-on: ubuntu-latest
+generate-content:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+  - name: Setup Python
+    uses: actions/setup-python@v5
+    with:
+      python-version: "3.11"
 
-      - name: Create Output Folder
-        run: mkdir -p output
+  - name: Install Dependencies
+    run: pip install -r requirements.txt
 
-      - name: Run Content Generator
-        run: python generate_content.py
+  - name: Create Output Folder
+    run: mkdir -p output
 
-      - name: Commit Generated Content
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+  - name: Run Content Generator
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+    run: python generate_content.py
 
-          git add output/content.md
-          git commit -m "Generate daily content" || echo "No changes"
+  - name: Commit Generated Content
+    run: |
+      git config --global user.name "github-actions"
+      git config --global user.email "github-actions@github.com"
 
-          git push
+      git add output/content.md
+      git commit -m "Generate daily content" || echo "No changes"
+
+      git push
+```
