@@ -115,20 +115,33 @@ response = model.generate_content(prompt)
 
 content = response.text
 
+sections = {}
+
+current_section = None
+
+for line in content.splitlines():
+    if line.startswith("===") and line.endswith("==="):
+        current_section = line.strip("=")
+        sections[current_section] = []
+    elif current_section:
+        sections[current_section].append(line)
+        
 os.makedirs("output", exist_ok=True)
 
-files = [
-    "content.md",
-    "carousel.md",
-    "linkedin.md",
-    "facebook.md",
-    "instagram.md",
-    "hashtags.md",
-    "image_prompts.md"
-]
+with open("output/content.md", "w", encoding="utf-8") as f:
+    f.write(content)
 
-for filename in files:
+mapping = {
+    "CAROUSEL": "carousel.md",
+    "LINKEDIN": "linkedin.md",
+    "FACEBOOK": "facebook.md",
+    "INSTAGRAM": "instagram.md",
+    "HASHTAGS": "hashtags.md",
+    "IMAGE_PROMPTS": "image_prompts.md"
+}
+
+for section, filename in mapping.items():
     with open(f"output/{filename}", "w", encoding="utf-8") as f:
-        f.write(content)
+        f.write("\n".join(sections.get(section, [])))
 
 print("Content generated successfully.")
