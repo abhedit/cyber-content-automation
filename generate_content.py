@@ -102,3 +102,41 @@ with open("output/image_prompts.md", "w", encoding="utf-8") as f:
     f.write(content)
 
 print("Content generated successfully.")
+Additionally create:
+
+## IMAGE PROMPTS
+
+Generate 6 professional image prompts.
+
+One prompt for each carousel slide.
+
+Requirements:
+
+* White background
+* Dark blue cybersecurity theme
+* Modern enterprise design
+* LinkedIn carousel style
+* 1080x1080
+* Minimalist
+* High-end corporate branding
+* Suitable for CISOs and Security Architects
+
+Format:
+
+Slide 1 Prompt:
+...
+
+Slide 2 Prompt:
+...
+
+Slide 3 Prompt:
+...
+
+Slide 4 Prompt:
+...
+
+Slide 5 Prompt:
+...
+
+Slide 6 Prompt:
+...
