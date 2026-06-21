@@ -1,0 +1,25 @@
+name: Daily Cybersecurity Content
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-content:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository Ready
+        run: |
+          echo "Abhedit Cybersecurity Content Automation"
+          echo "Workflow Running Successfully"
+
+      - name: Verify OpenAI Secret
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "API Key Missing"
+            exit 1
+          else
+            echo "API Key Found"
+          fi
