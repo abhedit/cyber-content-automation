@@ -13,7 +13,7 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 feeds = []
 
 with open("news_sources.txt", "r") as f:
-    feeds = [line.strip() for line in f if line.strip()]
+feeds = [line.strip() for line in f if line.strip()]
 
 articles = []
 
@@ -27,6 +27,7 @@ rss = feedparser.parse(feed)
             "title": entry.title,
             "link": entry.link
         })
+
 except Exception:
     pass
 ```
