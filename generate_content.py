@@ -46,18 +46,45 @@ Create:
 1. Story Selection Reason
 2. Source Headline
 3. 6 Slide Carousel
-
-Slide 1 - Breaking News
-Slide 2 - What Happened
-Slide 3 - Key Findings
-Slide 4 - Business Impact
-Slide 5 - Recommendations
-Slide 6 - Follow Abhedit
-
 4. LinkedIn Post
 5. Facebook Post
 6. Instagram Caption
 7. 20 Hashtags
+8. 6 Image Prompts
+
+For Image Prompts:
+
+Generate one prompt for each slide.
+
+Requirements:
+- White background
+- Dark blue cybersecurity theme
+- Professional enterprise design
+- LinkedIn carousel style
+- Modern typography
+- Minimalist layout
+- Premium corporate appearance
+- 1080x1080
+
+Format:
+
+Slide 1 Prompt:
+...
+
+Slide 2 Prompt:
+...
+
+Slide 3 Prompt:
+...
+
+Slide 4 Prompt:
+...
+
+Slide 5 Prompt:
+...
+
+Slide 6 Prompt:
+...
 
 Audience:
 - CISOs
