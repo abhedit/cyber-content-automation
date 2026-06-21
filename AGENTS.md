@@ -4,6 +4,20 @@
 
 Generate daily cybersecurity content for social media.
 
+## News Validation Rules
+
+Always provide:
+
+* Source URL
+* Publication Date
+* Why the story matters
+* Confidence Level
+
+Never combine multiple unrelated news stories into one carousel.
+
+Use one primary story only.
+
+
 ## Tasks
 
 1. Find the latest cybersecurity news.
