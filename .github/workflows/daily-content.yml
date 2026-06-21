@@ -3,23 +3,33 @@ name: Daily Cybersecurity Content
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   generate-content:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Repository Ready
-        run: |
-          echo "Abhedit Cybersecurity Content Automation"
-          echo "Workflow Running Successfully"
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Verify OpenAI Secret
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Create Content File
         run: |
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "API Key Missing"
-            exit 1
-          else
-            echo "API Key Found"
-          fi
+          mkdir -p output
+
+          echo "# Abhedit Daily Content" > output/content.md
+          echo "" >> output/content.md
+          echo "Generated on $(date)" >> output/content.md
+          echo "" >> output/content.md
+          echo "This file was created automatically by GitHub Actions." >> output/content.md
+
+      - name: Commit Content
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git add output/content.md
+          git commit -m "Auto-generate content file" || echo "No changes"
+
+          git push
