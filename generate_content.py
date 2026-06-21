@@ -1,3 +1,4 @@
+```python
 import os
 from datetime import datetime
 
@@ -9,8 +10,6 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Read RSS feeds
-feeds = []
-
 with open("news_sources.txt", "r") as f:
     feeds = [line.strip() for line in f if line.strip()]
 
@@ -26,8 +25,8 @@ for feed in feeds:
                 "link": entry.link
             })
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error reading feed {feed}: {e}")
 
 news_text = ""
 
@@ -52,18 +51,32 @@ Create:
 7. 20 Hashtags
 8. 6 Image Prompts
 
+Audience:
+- CISOs
+- Security Architects
+- Security Engineers
+- GRC Teams
+- Privacy Professionals
+
+Tone:
+- Professional
+- Business-focused
+- Actionable
+
 For Image Prompts:
 
-Generate one prompt for each slide.
+Generate one prompt for each carousel slide.
 
 Requirements:
 - White background
 - Dark blue cybersecurity theme
-- Professional enterprise design
+- Modern enterprise design
 - LinkedIn carousel style
 - Modern typography
 - Minimalist layout
 - Premium corporate appearance
+- High-end corporate branding
+- Suitable for CISOs and Security Architects
 - 1080x1080
 
 Format:
@@ -86,18 +99,6 @@ Slide 5 Prompt:
 Slide 6 Prompt:
 ...
 
-Audience:
-- CISOs
-- Security Architects
-- Security Engineers
-- GRC Teams
-- Privacy Professionals
-
-Tone:
-Professional
-Business-focused
-Actionable
-
 Output in markdown.
 """
 
@@ -107,63 +108,19 @@ content = response.text
 
 os.makedirs("output", exist_ok=True)
 
-with open("output/content.md", "w", encoding="utf-8") as f:
-    f.write(content)
+files = [
+    "content.md",
+    "carousel.md",
+    "linkedin.md",
+    "facebook.md",
+    "instagram.md",
+    "hashtags.md",
+    "image_prompts.md"
+]
 
-with open("output/carousel.md", "w", encoding="utf-8") as f:
-    f.write(content)
-
-with open("output/linkedin.md", "w", encoding="utf-8") as f:
-    f.write(content)
-
-with open("output/facebook.md", "w", encoding="utf-8") as f:
-    f.write(content)
-
-with open("output/instagram.md", "w", encoding="utf-8") as f:
-    f.write(content)
-
-with open("output/hashtags.md", "w", encoding="utf-8") as f:
-    f.write(content)
-
-with open("output/image_prompts.md", "w", encoding="utf-8") as f:
-    f.write(content)
+for filename in files:
+    with open(f"output/{filename}", "w", encoding="utf-8") as f:
+        f.write(content)
 
 print("Content generated successfully.")
-Additionally create:
-
-## IMAGE PROMPTS
-
-Generate 6 professional image prompts.
-
-One prompt for each carousel slide.
-
-Requirements:
-
-* White background
-* Dark blue cybersecurity theme
-* Modern enterprise design
-* LinkedIn carousel style
-* 1080x1080
-* Minimalist
-* High-end corporate branding
-* Suitable for CISOs and Security Architects
-
-Format:
-
-Slide 1 Prompt:
-...
-
-Slide 2 Prompt:
-...
-
-Slide 3 Prompt:
-...
-
-Slide 4 Prompt:
-...
-
-Slide 5 Prompt:
-...
-
-Slide 6 Prompt:
-...
+```
