@@ -9,7 +9,6 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Read RSS feeds
-
 feeds = []
 
 with open("news_sources.txt", "r") as f:
@@ -18,24 +17,22 @@ with open("news_sources.txt", "r") as f:
 articles = []
 
 for feed in feeds:
-try:
-rss = feedparser.parse(feed)
+    try:
+        rss = feedparser.parse(feed)
 
-```
-    for entry in rss.entries[:5]:
-        articles.append({
-            "title": entry.title,
-            "link": entry.link
-        })
+        for entry in rss.entries[:5]:
+            articles.append({
+                "title": entry.title,
+                "link": entry.link
+            })
 
-except Exception:
-    pass
-```
+    except Exception:
+        pass
 
 news_text = ""
 
 for i, article in enumerate(articles[:20], start=1):
-news_text += f"{i}. {article['title']}\n"
+    news_text += f"{i}. {article['title']}\n"
 
 prompt = f"""
 You are Abhedit's Cybersecurity Intelligence Agent.
@@ -63,12 +60,11 @@ Slide 6 - Follow Abhedit
 7. 20 Hashtags
 
 Audience:
-
-* CISOs
-* Security Architects
-* Security Engineers
-* GRC Teams
-* Privacy Professionals
+- CISOs
+- Security Architects
+- Security Engineers
+- GRC Teams
+- Privacy Professionals
 
 Tone:
 Professional
@@ -85,8 +81,8 @@ content = response.text
 os.makedirs("output", exist_ok=True)
 
 with open("output/content.md", "w", encoding="utf-8") as f:
-f.write("# Abhedit Daily Cybersecurity Content\n\n")
-f.write(f"Generated on: {datetime.utcnow()}\n\n")
-f.write(content)
+    f.write("# Abhedit Daily Cybersecurity Content\n\n")
+    f.write(f"Generated on: {datetime.utcnow()}\n\n")
+    f.write(content)
 
 print("Content generated successfully.")
