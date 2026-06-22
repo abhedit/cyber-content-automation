@@ -8,6 +8,17 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 model = genai.GenerativeModel("gemini-2.5-flash")
 
+# Load knowledge files
+
+with open("knowledge/content-universe.md", "r", encoding="utf-8") as f:
+    content_universe = f.read()
+
+with open("knowledge/content-strategy.md", "r", encoding="utf-8") as f:
+    content_strategy = f.read()
+
+with open("knowledge/content-sources.md", "r", encoding="utf-8") as f:
+    content_sources = f.read()
+    
 # Read RSS feeds
 with open("news_sources.txt", "r") as f:
     feeds = [line.strip() for line in f if line.strip()]
