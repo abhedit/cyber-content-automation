@@ -1,20 +1,20 @@
-#AISecurity
-#AIGovernance
-#AIStrategy
-#Cybersecurity
-#SecurityArchitecture
-#RiskManagement
-#DigitalTrust
-#LegacySystems
-#CloudSecurity
-#GRC
-#CISO
-#CTO
-#EnterpriseSecurity
-#DataPrivacy
-#Compliance
-#InformationSecurity
-#SecurityLeaders
-#AIInnovation
-#ThreatIntelligence
-#FutureProofingAI
+1.  #AIGovernance
+2.  #AISecurity
+3.  #DataPrivacy
+4.  #CloudSecurity
+5.  #GRC
+6.  #SecurityArchitecture
+7.  #RiskManagement
+8.  #ZeroTrust
+9.  #CybersecurityLeadership
+10. #CISOStrategy
+11. #DigitalTrust
+12. #NISTAIRMF
+13. #ISO42001
+14. #Compliance
+15. #PrivacyEngineering
+16. #EnterpriseAI
+17. #MicrosoftCopilot
+18. #DataGovernance
+19. #InfoSec
+20. #TechLeaders
