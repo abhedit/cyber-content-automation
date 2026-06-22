@@ -18,6 +18,12 @@ with open("knowledge/content-strategy.md", "r", encoding="utf-8") as f:
 
 with open("knowledge/content-sources.md", "r", encoding="utf-8") as f:
     content_sources = f.read()
+
+with open("knowledge/platform-strategy.md", "r", encoding="utf-8") as f:
+    platform_strategy = f.read()
+
+with open("knowledge/content-decision-framework.md", "r", encoding="utf-8") as f:
+    content_decision_framework = f.read()
     
 # Read RSS feeds
 with open("news_sources.txt", "r") as f:
@@ -54,6 +60,21 @@ CONTENT STRATEGY:
 
 CONTENT SOURCES:
 {content_sources}
+
+PLATFORM STRATEGY:
+{platform_strategy}
+
+CONTENT DECISION FRAMEWORK:
+{content_decision_framework}
+
+CONTENT SOURCES:
+{content_sources}
+
+PLATFORM STRATEGY:
+{platform_strategy}
+
+CONTENT DECISION FRAMEWORK:
+{content_decision_framework}
 You are Abhedit's Content Intelligence Engine.
 
 CURRENT INDUSTRY SIGNALS:
