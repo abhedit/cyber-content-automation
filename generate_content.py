@@ -24,7 +24,9 @@ with open("knowledge/platform-strategy.md", "r", encoding="utf-8") as f:
 
 with open("knowledge/content-decision-framework.md", "r", encoding="utf-8") as f:
     content_decision_framework = f.read()
-    
+
+with open("knowledge/content-output-framework.md", "r", encoding="utf-8") as f:
+    content_output_framework = f.read()
 # Read RSS feeds
 with open("news_sources.txt", "r") as f:
     feeds = [line.strip() for line in f if line.strip()]
@@ -66,6 +68,9 @@ PLATFORM STRATEGY:
 
 CONTENT DECISION FRAMEWORK:
 {content_decision_framework}
+
+CONTENT OUTPUT FRAMEWORK:
+{content_output_framework}
 
 CONTENT SOURCES:
 {content_sources}
