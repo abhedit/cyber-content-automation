@@ -44,6 +44,16 @@ for i, article in enumerate(articles[:20], start=1):
     news_text += f"{i}. {article['title']}\n"
 
 prompt = f"""
+ABHEDIT KNOWLEDGE BASE
+
+CONTENT UNIVERSE:
+{content_universe}
+
+CONTENT STRATEGY:
+{content_strategy}
+
+CONTENT SOURCES:
+{content_sources}
 You are Abhedit's Cybersecurity Intelligence Agent.
 
 Select the single most important cybersecurity story from these headlines:
