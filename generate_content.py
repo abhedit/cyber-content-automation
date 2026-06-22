@@ -132,7 +132,23 @@ Slide 6 Prompt:
 Output in markdown.
 """
 
-response = model.generate_content(prompt)
+import time
+
+response = None
+
+for attempt in range(3):
+    try:
+        response = model.generate_content(prompt)
+        break
+
+    except Exception as e:
+        print(f"Attempt {attempt + 1} failed: {e}")
+
+        if attempt < 2:
+            print("Waiting 30 seconds before retry...")
+            time.sleep(30)
+        else:
+            raise
 
 content = response.text
 
