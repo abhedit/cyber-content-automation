@@ -1,20 +1,20 @@
-1.  #Cybersecurity
-2.  #AISecurity
-3.  #AutoJack
-4.  #ThreatIntelligence
-5.  #EnterpriseSecurity
-6.  #CISO
-7.  #SecurityArchitecture
-8.  #Abhedit
-9.  #DigitalTransformation
-10. #CyberAttack
-11. #AI
-12. #DataProtection
-13. #Infosec
-14. #EmergingThreats
-15. #SecurityAwareness
-16. #HostCodeExecution
-17. #PromptInjection
-18. #ZeroTrustAI
-19. #SecureAI
-20. #CyberResilience
+#AISecurity
+#AIGovernance
+#AIStrategy
+#Cybersecurity
+#SecurityArchitecture
+#RiskManagement
+#DigitalTrust
+#LegacySystems
+#CloudSecurity
+#GRC
+#CISO
+#CTO
+#EnterpriseSecurity
+#DataPrivacy
+#Compliance
+#InformationSecurity
+#SecurityLeaders
+#AIInnovation
+#ThreatIntelligence
+#FutureProofingAI
