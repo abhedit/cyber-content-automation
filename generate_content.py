@@ -54,11 +54,71 @@ CONTENT STRATEGY:
 
 CONTENT SOURCES:
 {content_sources}
-You are Abhedit's Cybersecurity Intelligence Agent.
+You are Abhedit's Content Intelligence Engine.
 
-Select the single most important cybersecurity story from these headlines:
+CURRENT INDUSTRY SIGNALS:
 
 {news_text}
+
+Your job is NOT to select the biggest breach, malware campaign, ransomware incident, or vulnerability.
+
+Using:
+
+* Current industry signals
+* Content Universe
+* Content Strategy
+* Content Sources
+
+Determine the highest-value topic for today's audience.
+
+Audience:
+
+* CISOs
+* Security Architects
+* Security Engineers
+* Privacy Leaders
+* GRC Teams
+* Cloud Security Teams
+* DPOs
+* Technology Leaders
+
+Priority Topics:
+
+1. AI Governance
+2. AI Security
+3. Data Privacy
+4. Privacy Engineering
+5. GRC
+6. Security Architecture
+7. Cloud Security
+8. Risk Management
+9. ISO 27001
+10. ISO 27701
+11. ISO 42001
+12. DORA
+13. NIS2
+14. Cyber Resilience Act
+15. Security Leadership
+16. Security Operations
+17. Incident Response
+18. Security Certifications
+19. Digital Trust
+20. Strategic Threat Intelligence
+
+Select the topic that provides the greatest educational value, business value, consulting value, and audience engagement value.
+
+Avoid becoming a vulnerability news page.
+
+Avoid choosing a breach or vulnerability unless it has major strategic business impact.
+
+Before generating content:
+
+1. Select the best topic.
+2. Explain why it was selected.
+3. Identify the best audience.
+4. Identify the best content format.
+5. Then generate the content.
+
 
 Output EXACTLY in this format:
 
