@@ -1,4 +1,5 @@
 import copy
+import re
 import json
 import os
 from datetime import datetime, timezone
@@ -282,3 +283,23 @@ def test_transient_errors_are_retried(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "dummy")
     monkeypatch.setattr(model, "_generate", flaky)
     assert model.call_gemini("p", wait_s=0) == "{}" and len(calls) == 3
+
+
+# ---------- regressions from the first live run (2026-11-17) ----------
+
+def test_inline_hashtags_removed_so_only_20_approved_tags_appear(draft, candidates):
+    draft["instagram"] = "Apple boosts #AIAgent security for #AIGovernance.\n\n#Cybersecurity #GRC #TechNews"
+    draft["linkedin"] += "\n\n#CISO #InfoSec"
+    pkg = _live_pkg(draft, candidates)
+    ig = pkg["posts"]["instagram"]
+    assert "Apple boosts AIAgent security for AIGovernance." in ig
+    assert "#TechNews" not in ig and "#CISO" not in pkg["posts"]["linkedin"]
+    assert len(re.findall(r"#\w+", ig)) == 20
+
+
+def test_third_party_logo_in_image_prompt_is_flagged(draft, candidates):
+    draft["image_prompts"][0] = "Bold headline with an Apple logo subtly in the background"
+    _, flags = validate(draft, candidates, now=DRY_RUN_NOW)
+    assert any("image prompt 1" in f and "logo" in f for f in flags)
+    _, flags = validate(json.loads(open(os.path.join(FIX, "sample_draft.json")).read()), candidates, now=DRY_RUN_NOW)
+    assert not any("logo" in f for f in flags)  # "Abhedit wordmark" prompts are fine

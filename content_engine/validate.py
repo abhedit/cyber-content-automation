@@ -105,6 +105,9 @@ def validate(draft: dict, candidates: list[dict], now: datetime | None = None) -
         hits = sorted({label for pattern, label in SENSITIVE_PATTERNS if re.search(pattern, text, re.I)})
         if hits:
             flags.append(f"{name}: contains {', '.join(hits)} - verify against the source")
+    for i, ip in enumerate(draft.get("image_prompts") or [], start=1):
+        if re.search(r"\blogos?\b|trademark", str(ip), re.I) and not re.search(r"abhedit", str(ip), re.I):
+            flags.append(f"image prompt {i}: mentions a logo/trademark - do not use third-party branding")
     for claim in draft.get("claims_to_verify") or []:
         flags.append(f"Verify claim: {claim}")
 

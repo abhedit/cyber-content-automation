@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timezone
 
 from .validate import validate
@@ -25,13 +26,22 @@ def _source_line(story: dict, with_url: bool = True) -> str:
     return f"Source: {story['source']} ({date}). Link in bio."
 
 
+def strip_hashtags(text: str) -> str:
+    """Hashtags belong only in the approved list. Drop hashtag-only lines and
+    turn inline tags into plain words ("#AIGovernance rules" -> "AIGovernance rules")."""
+    lines = [ln for ln in text.splitlines() if not re.fullmatch(r"\s*(#\w+\s*)+", ln)]
+    cleaned = re.sub(r"(?<![\w&])#(\w+)", r"\1", "\n".join(lines))
+    return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+
+
 def render_posts(draft: dict, story: dict) -> dict:
-    """Final platform text: model copy + the verified source citation."""
+    """Final platform text: model copy + the verified source citation.
+    Only the 20 validated hashtags are used, once, on Instagram."""
     tags = " ".join(draft.get("hashtags") or [])
     return {
-        "linkedin": f"{draft['linkedin'].strip()}\n\n{_source_line(story)}",
-        "facebook": f"{draft['facebook'].strip()}\n\n{_source_line(story)}",
-        "instagram": f"{draft['instagram'].strip()}\n\n{_source_line(story, with_url=False)}\n\n{tags}",
+        "linkedin": f"{strip_hashtags(draft['linkedin'])}\n\n{_source_line(story)}",
+        "facebook": f"{strip_hashtags(draft['facebook'])}\n\n{_source_line(story)}",
+        "instagram": f"{strip_hashtags(draft['instagram'])}\n\n{_source_line(story, with_url=False)}\n\n{tags}",
     }
 
 

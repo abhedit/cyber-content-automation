@@ -47,6 +47,9 @@ HARD RULES (the output is machine-validated; violations are rejected):
 5. Exactly 20 unique hashtags, each starting with #, no spaces.
 6. Do not include the source URL in the posts; the system appends the verified source itself.
 7. Tone: professional, business-focused, actionable, clear, modern. No fear-mongering.
+8. Put hashtags ONLY in "hashtags". Never write hashtags inside linkedin, facebook or instagram text.
+9. Image prompts must not include any company's logo, trademark or product imagery; use abstract
+   enterprise visuals in Abhedit style (white background, dark blue, minimalist, 1080x1080).
 """.strip()
 
 

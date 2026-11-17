@@ -16,11 +16,30 @@ _Last updated: 2026-11-17_
 | RSS research over 4 feeds | `generate_content.py`, `news_sources.txt` | **Implemented and run in GitHub Actions** (commits named "Generate daily content"). |
 | Gemini content generation (carousel, LinkedIn, Facebook, Instagram, hashtags, image prompts) | `generate_content.py` | **Implemented, runs live** with the `GEMINI_API_KEY` repo secret. Uses `google-generativeai`, which Google no longer supports. |
 | Knowledge base (strategy, universe, sources, platform, decision and output frameworks) | `knowledge/` | Written; loaded into the prompt. |
-| **Source-locked package + validation + approval gate** (new) | `content_engine/` | **Implemented and unit-tested (30 tests). Dry-run tested only.** Has not been run against live feeds or Gemini yet. |
+| **Source-locked package + validation + approval gate** (new) | `content_engine/` | **Implemented, 37 tests, and run live** (see section 1a). Approval has only been exercised on test data, never on a live package. |
 | Publishing to Facebook / LinkedIn / Instagram | not in this repo | **Not implemented here.** Your n8n Facebook publisher is outside this repo, so this document cannot confirm it has ever posted live. |
-| Carousel image rendering | not implemented | Only text image prompts exist; no PNGs are produced. |
+| Carousel image rendering (new) | `content_engine/render.py` | **Implemented and run live:** 6 branded 1080×1080 PNGs from the validated slide text, at $0 per image. |
 | Scheduling | `.github/workflows/daily-content.yml` | Manual trigger only (`workflow_dispatch`); there is no cron schedule. |
 | Reporting / analytics | not implemented | None. |
+
+### 1a. Live verification (2026-11-17, GitHub Actions run 44157483424 on the dev branch)
+
+- **Feeds:** all 4 reachable, 32 usable stories (link, date and age of 48h or less), 0 errors.
+- **Gemini key:** valid. The first attempt failed with 400 because the new SDK defaults
+  to API v1, which has no JSON mode. Fixed by pinning v1beta; 400-type errors are no
+  longer retried.
+- **First live package:**
+  - Story: "Apple Tightens macOS App Permissions…" (The Hacker News, 2026-11-17).
+  - 0 blocking errors and 5 claims flagged to verify; 6 slide PNGs rendered.
+  - Status is `pending_review`, so nothing was published.
+- **Problems found in that output, now fixed in code:**
+  - Gemini also wrote hashtags inside the Instagram caption, giving 29 tags with duplicates.
+    The post text is now stripped, so only the 20 validated tags appear.
+  - An image prompt asked for an Apple logo. The prompt now forbids third-party logos,
+    and the validator flags them.
+- **Workflow:** `live-smoke.yml` repeats this check whenever `content_engine/` changes on
+  the dev branch. It uses one Gemini call and uploads a run artifact. It never commits or
+  publishes.
 
 ### Problems found in the current generator (from its last committed output)
 
@@ -63,6 +82,8 @@ python -m content_engine generate              # live; needs GEMINI_API_KEY
 python -m content_engine approve output/packages/2026-11-17/package.json --by "Your Name" --ack-flags
 python -m content_engine rehash  output/packages/2026-11-17/package.json   # after hand-editing copy
 python -m content_engine check   output/packages/2026-11-17/package.json   # exit 0 = safe to publish
+python -m content_engine render  output/packages/2026-11-17/package.json   # slide PNGs
+python -m content_engine sources                                           # live feed check, no key
 python -m pytest -q
 ```
 
@@ -117,12 +138,13 @@ validation.
 
 ## 6. Milestones (cheapest first)
 
-1. **Done in this branch:** source-locked package, validation, approval gate, tests and dry run.
-2. **Next (you, about 15 min):** add the repo secret if missing, run *Generate Content
-   Package*, and read `review.md`. Report errors back so the prompt can be tuned.
+1. **Done in this branch:** source-locked package, validation, approval gate, slide
+   rendering, and a live end-to-end run.
+2. **Next (you, about 5 min):** merge this branch into `main`. GitHub only allows
+   manually started workflows from the default branch, so this enables *Generate Content
+   Package* and *Approve Content Package* in the Actions tab.
 3. **Wire n8n to the contract in section 3** and do one Facebook post to a
    **test/unpublished audience** before going live.
-4. **Carousel PNG rendering** from slide text with an HTML template and Playwright
-   ($0, brand-consistent, no AI image cost). This unblocks Instagram.
+4. ~~Carousel PNG rendering~~ **done.** Instagram still needs the PNGs hosted at a public URL.
 5. **Reporting:** weekly pull of Facebook/LinkedIn post insights into a CSV/markdown report.
 6. **Scheduling:** add a cron to the generate workflow once 5–10 manual runs pass review.
