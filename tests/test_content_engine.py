@@ -245,3 +245,40 @@ def test_too_much_text_is_refused_not_cropped(tmp_path):
     pkg = {"carousel": ["Headline"] + ["overflowing " * 120] + ["x"] * 4, "story": None}
     with pytest.raises(ValueError, match="slide 2 text does not fit"):
         render_slides(pkg, str(tmp_path))
+
+
+# ---------- model client ----------
+
+def test_permanent_errors_are_not_retried(monkeypatch):
+    from content_engine import model
+
+    calls = []
+
+    class Bad(Exception):
+        code = 400
+
+    def boom(prompt, m, key):
+        calls.append(1)
+        raise Bad("400 INVALID_ARGUMENT")
+
+    monkeypatch.setenv("GEMINI_API_KEY", "dummy")
+    monkeypatch.setattr(model, "_generate", boom)
+    with pytest.raises(RuntimeError, match="INVALID_ARGUMENT"):
+        model.call_gemini("p", wait_s=0)
+    assert len(calls) == 1
+
+
+def test_transient_errors_are_retried(monkeypatch):
+    from content_engine import model
+
+    calls = []
+
+    def flaky(prompt, m, key):
+        calls.append(1)
+        if len(calls) < 3:
+            raise ConnectionError("503 UNAVAILABLE")
+        return "{}"
+
+    monkeypatch.setenv("GEMINI_API_KEY", "dummy")
+    monkeypatch.setattr(model, "_generate", flaky)
+    assert model.call_gemini("p", wait_s=0) == "{}" and len(calls) == 3

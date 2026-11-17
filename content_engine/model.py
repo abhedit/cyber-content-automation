@@ -22,9 +22,19 @@ def call_gemini(prompt: str, model: str = DEFAULT_MODEL, attempts: int = 3, wait
         except Exception as exc:  # network / quota / 5xx
             last = exc
             print(f"Gemini attempt {attempt + 1} failed: {exc}")
+            if _is_permanent(exc):
+                break
             if attempt < attempts - 1:
                 time.sleep(wait_s)
-    raise RuntimeError(f"Gemini failed after {attempts} attempts: {last}")
+    raise RuntimeError(f"Gemini failed: {last}")
+
+
+def _is_permanent(exc: Exception) -> bool:
+    """400/401/403/404 will not succeed on retry; 429 and 5xx might."""
+    code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+    if isinstance(code, int):
+        return code in (400, 401, 403, 404)
+    return any(t in str(exc) for t in ("INVALID_ARGUMENT", "PERMISSION_DENIED", "API_KEY_INVALID"))
 
 
 def _generate(prompt: str, model: str, api_key: str) -> str:
@@ -32,7 +42,8 @@ def _generate(prompt: str, model: str, api_key: str) -> str:
         from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=api_key)
+        # JSON mode is only available on v1beta (v1 returns 400 INVALID_ARGUMENT).
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1beta"))
         resp = client.models.generate_content(
             model=model,
             contents=prompt,
