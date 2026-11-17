@@ -213,3 +213,35 @@ def test_live_path_retries_with_validation_feedback(tmp_path, monkeypatch, draft
     assert len(prompts) == 2 and "slide 2 has 45 words" in prompts[1]
     pkg = json.loads((tmp_path / "out" / "2026-01-15" / "package.json").read_text())
     assert pkg["run_mode"] == "live" and pkg["status"] == "pending_review"
+
+
+# ---------- rendering ----------
+
+def test_slide_html_escapes_text_and_shows_source_on_slide_2():
+    from content_engine.render import slide_html
+
+    doc = slide_html("<script>x</script> & more", 2, 6, "Source: Example, 2026-01-15")
+    assert "<script>x" not in doc and "&lt;script&gt;" in doc
+    assert "Source: Example, 2026-01-15" in doc and "2 / 6" in doc and "What happened" in doc
+    assert "Source:" not in slide_html("Headline", 1, 6, "Source: Example")
+
+
+def test_render_pngs_from_dry_run(tmp_path):
+    pytest.importorskip("playwright")
+    assert main(["generate", "--dry-run", "--render", "--out", str(tmp_path)]) == 0
+    slides = sorted((tmp_path / "2026-01-15-dry-run" / "slides").glob("*.png"))
+    assert len(slides) == 6
+    for png in slides:
+        data = png.read_bytes()
+        assert data[:8] == b"\x89PNG\r\n\x1a\n"
+        w, h = int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+        assert (w, h) == (1080, 1080)
+
+
+def test_too_much_text_is_refused_not_cropped(tmp_path):
+    pytest.importorskip("playwright")
+    from content_engine.render import render_slides
+
+    pkg = {"carousel": ["Headline"] + ["overflowing " * 120] + ["x"] * 4, "story": None}
+    with pytest.raises(ValueError, match="slide 2 text does not fit"):
+        render_slides(pkg, str(tmp_path))

@@ -5,6 +5,8 @@
   python -m content_engine approve PATH --by NAME [--ack-flags]
   python -m content_engine rehash PATH             # after editing copy by hand; clears approval
   python -m content_engine check PATH              # exit 0 only if safe to publish
+  python -m content_engine render PATH             # carousel PNGs into <package>/slides/
+  python -m content_engine sources                 # live feed check only (no API key)
 
 Nothing in this package posts to any social network.
 """
@@ -70,7 +72,33 @@ def generate(args) -> int:
     print(f"Status: {pkg['status']} | errors: {len(v['errors'])} | review flags: {len(v['review_flags'])}")
     for e in v["errors"]:
         print(f"  ERROR {e}")
+    if args.render and not v["errors"]:
+        from .render import render_slides
+
+        print(f"Rendered {len(render_slides(pkg, folder))} slide images into {folder}/slides/")
     return 1 if v["errors"] else 0
+
+
+def render(args) -> int:
+    from .render import render_slides
+
+    path = os.path.abspath(args.path)
+    pkg = pk.load(path)
+    if pkg["validation"]["errors"]:
+        print("Package has validation errors; not rendering.")
+        return 1
+    print(f"Rendered {len(render_slides(pkg, os.path.dirname(path)))} slide images")
+    return 0
+
+
+def sources(args) -> int:
+    candidates, errors = fetch_candidates(read_feed_list(args.feeds), max_age_hours=args.max_age_hours)
+    for e in errors:
+        print(f"FEED ERROR {e}")
+    for c in candidates:
+        print(f"{c['id']} {c['published'][:16]} [{c['source']}] {c['title']}\n    {c['url']}")
+    print(f"{len(candidates)} usable stories, {len(errors)} feed errors")
+    return 0 if candidates else 2
 
 
 def approve(args) -> int:
@@ -108,6 +136,7 @@ def main(argv=None) -> int:
     g.add_argument("--model", default=DEFAULT_MODEL)
     g.add_argument("--max-age-hours", type=int, default=48)
     g.add_argument("--max-rounds", type=int, default=2, help="model calls allowed to fix validation errors")
+    g.add_argument("--render", action="store_true", help="also render carousel PNGs")
     g.set_defaults(fn=generate)
     a = sub.add_parser("approve")
     a.add_argument("path")
@@ -120,6 +149,13 @@ def main(argv=None) -> int:
     c = sub.add_parser("check")
     c.add_argument("path")
     c.set_defaults(fn=check)
+    rd = sub.add_parser("render")
+    rd.add_argument("path")
+    rd.set_defaults(fn=render)
+    so = sub.add_parser("sources")
+    so.add_argument("--feeds", default="news_sources.txt")
+    so.add_argument("--max-age-hours", type=int, default=48)
+    so.set_defaults(fn=sources)
     args = p.parse_args(argv)
     return args.fn(args)
 

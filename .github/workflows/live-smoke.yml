@@ -1,0 +1,48 @@
+name: Live Smoke Test (no publishing)
+
+# Runs the real pipeline (live RSS + Gemini + slide rendering) on the
+# development branch so it can be verified before merging to main.
+# Output is uploaded as a run artifact only: nothing is committed or published.
+on:
+  push:
+    branches: [claude/abhedit-ai-content-automation-nqwi04]
+    paths:
+      - "content_engine/**"
+      - "news_sources.txt"
+      - ".github/workflows/live-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          pip install -r requirements.txt playwright==1.63.0
+          python -m playwright install --with-deps chromium
+      - name: Live feed check (no API key)
+        run: python -m content_engine sources
+      - name: Live generate + validate + render
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then echo "GEMINI_API_KEY secret is not available to this run"; exit 1; fi
+          python -m content_engine generate --render
+      - name: Show review sheet
+        if: always()
+        run: cat output/packages/*/review.md 2>/dev/null || echo "no package produced"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: content-package
+          path: output/packages/
+          retention-days: 7
+          if-no-files-found: warn
