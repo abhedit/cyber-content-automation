@@ -1,0 +1,34 @@
+{
+  "selection": {
+    "candidate_id": "S52bad1a7",
+    "why_selected": "Regulatory AI governance guidance has direct GRC and consulting value; the router patch is routine.",
+    "why_it_matters": "Firms using AI in customer decisions will need documented risk assessments, model inventories and human oversight before regulators ask.",
+    "confidence": "high",
+    "confidence_reason": "Single reputable source; all facts used appear in the feed summary.",
+    "service_angle": "consulting"
+  },
+  "carousel": [
+    "Regulators Are Asking: Can You Prove Your AI Is Governed?",
+    "A financial regulator released draft guidance requiring documented AI risk assessments, model inventories and human oversight for customer-facing AI.",
+    "AI governance is moving from good practice to supervisory expectation. Undocumented AI becomes an audit finding.",
+    "Expect longer approval cycles, new evidence requests and pressure on teams that cannot show who owns each model.",
+    "Build an AI inventory. Map each system to a risk assessment. Define human oversight. Align controls with ISO 42001.",
+    "Is your AI governance audit-ready? Follow Abhedit for cybersecurity insights."
+  ],
+  "linkedin": "Regulators are starting to ask a simple question: can you prove your AI is governed?\n\nA financial regulator has published draft guidance asking firms to document AI risk assessments, maintain model inventories and show human oversight before AI is used in customer-facing decisions. The consultation is open for 60 days.\n\nWhat this means for CISOs and GRC teams:\n- An AI inventory becomes a baseline control\n- Each AI system needs a documented risk assessment\n- Human oversight must be designed, not assumed\n\nISO 42001 gives you a ready-made structure for all three.\n\nWhere is your organisation today?",
+  "facebook": "AI rules are getting practical. A financial regulator has published draft guidance asking firms to document AI risk assessments, keep a list of their AI models and make sure humans oversee AI decisions that affect customers. Start with an inventory of every AI tool you use.",
+  "instagram": "Can you prove your AI is governed? New draft guidance asks firms for AI risk assessments, model inventories and human oversight. Start with an inventory.",
+  "hashtags": ["#AIGovernance", "#AIRisk", "#ISO42001", "#GRC", "#RiskManagement", "#Compliance", "#CISO", "#CyberSecurity", "#DataPrivacy", "#ResponsibleAI", "#AIRegulation", "#FinTech", "#SecurityLeadership", "#DigitalTrust", "#ModelRisk", "#AICompliance", "#InfoSec", "#RegTech", "#AuditReadiness", "#Abhedit"],
+  "image_prompts": [
+    "1080x1080, white background, dark blue accents, bold headline typography, minimalist shield and checklist icon",
+    "1080x1080, white background, dark blue document icon labelled draft guidance, clean enterprise layout",
+    "1080x1080, white background, dark blue arrow from good practice to expectation, modern typography",
+    "1080x1080, white background, dark blue icons for approvals, evidence and ownership",
+    "1080x1080, white background, dark blue four-step checklist, premium corporate style",
+    "1080x1080, white background, dark blue Abhedit wordmark area with follow call to action"
+  ],
+  "claims_to_verify": [
+    "Draft guidance covers AI risk assessments, model inventories and human oversight",
+    "Consultation period is 60 days"
+  ]
+}

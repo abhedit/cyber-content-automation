@@ -1,0 +1,36 @@
+name: Generate Content Package (review required)
+
+# Manual only. Produces output/packages/<date>/package.json + review.md with
+# status "pending_review". Nothing is published by this workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: content-package
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Generate and validate
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python -m content_engine generate
+      - name: Commit package for review
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add output/packages/
+          git commit -m "Content package for review" || echo "No changes"
+          git pull --rebase
+          git push

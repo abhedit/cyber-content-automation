@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- FICTIONAL test data for dry runs. Not real news. Domains are example.* -->
+<rss version="2.0">
+<channel>
+  <title>Example Security Wire (fixture)</title>
+  <link>https://news.example.com/</link>
+  <description>Fictional fixture feed</description>
+  <item>
+    <title>Regulator publishes draft guidance on AI risk assessments for financial firms</title>
+    <link>https://news.example.com/2026/01/ai-risk-guidance</link>
+    <pubDate>Thu, 15 Jan 2026 08:00:00 GMT</pubDate>
+    <description><![CDATA[<p>A fictional financial regulator released draft guidance asking firms to document AI risk assessments, model inventories and human oversight before deploying AI in customer-facing decisions. Consultation is open for 60 days.</p>]]></description>
+  </item>
+  <item>
+    <title>Vendor patches router firmware flaw</title>
+    <link>https://news.example.com/2026/01/router-patch</link>
+    <pubDate>Thu, 15 Jan 2026 06:30:00 GMT</pubDate>
+    <description>A fictional vendor fixed a firmware bug in consumer routers.</description>
+  </item>
+  <item>
+    <title>Duplicate of the AI guidance story</title>
+    <link>https://news.example.com/2026/01/ai-risk-guidance/</link>
+    <pubDate>Thu, 15 Jan 2026 07:00:00 GMT</pubDate>
+    <description>Same URL with a trailing slash; must be de-duplicated.</description>
+  </item>
+  <item>
+    <title>Story with no publication date</title>
+    <link>https://news.example.com/2026/01/undated</link>
+    <description>Must be dropped: AGENTS.md requires a publication date.</description>
+  </item>
+  <item>
+    <title>Old story outside the age window</title>
+    <link>https://news.example.com/2025/12/old</link>
+    <pubDate>Mon, 01 Dec 2025 09:00:00 GMT</pubDate>
+    <description>Must be dropped as stale.</description>
+  </item>
+  <item>
+    <title>Story with no link</title>
+    <pubDate>Thu, 15 Jan 2026 05:00:00 GMT</pubDate>
+    <description>Must be dropped: AGENTS.md requires a source URL.</description>
+  </item>
+</channel>
+</rss>

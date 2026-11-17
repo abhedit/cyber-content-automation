@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Dry-run packages from content_engine (fixture data)
+output/packages/*-dry-run/

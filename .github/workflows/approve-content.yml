@@ -1,0 +1,49 @@
+name: Approve Content Package
+
+# Only people with write access to the repo can run this. Approval records the
+# GitHub username and binds to the content hash; any later edit voids it.
+on:
+  workflow_dispatch:
+    inputs:
+      package_date:
+        description: "Package folder date, e.g. 2026-11-17"
+        required: true
+      flags_checked:
+        description: "I verified every item under 'Check before approving' in review.md"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Approve
+        env:
+          PKG_DATE: ${{ inputs.package_date }}
+          FLAGS_CHECKED: ${{ inputs.flags_checked }}
+          REVIEWER: ${{ github.actor }}
+        run: |
+          case "$PKG_DATE" in
+            [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+            *) echo "package_date must look like YYYY-MM-DD"; exit 1 ;;
+          esac
+          ACK=""
+          if [ "$FLAGS_CHECKED" = "true" ]; then ACK="--ack-flags"; fi
+          python -m content_engine approve "output/packages/$PKG_DATE/package.json" --by "$REVIEWER" $ACK
+          python -m content_engine check "output/packages/$PKG_DATE/package.json"
+      - name: Commit approval
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add output/packages/
+          git commit -m "Approve content package ${{ inputs.package_date }}"
+          git pull --rebase
+          git push
