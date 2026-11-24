@@ -28,6 +28,7 @@ jobs:
         run: |
           pip install -r requirements.txt playwright==1.63.0
           python -m playwright install --with-deps chromium
+          which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - name: Live feed check (no API key)
         run: python -m content_engine sources
       - name: Live generate + validate + render
@@ -36,6 +37,8 @@ jobs:
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then echo "GEMINI_API_KEY secret is not available to this run"; exit 1; fi
           python -m content_engine generate --render
+      - name: Publish dry run (no network, never posts)
+        run: python -m content_engine publish output/packages/$(date -u +%F)/package.json --dry-run
       - name: Show review sheet
         if: always()
         run: cat output/packages/*/review.md 2>/dev/null || echo "no package produced"

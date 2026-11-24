@@ -17,7 +17,7 @@ _Last updated: 2026-11-17_
 | Gemini content generation (carousel, LinkedIn, Facebook, Instagram, hashtags, image prompts) | `generate_content.py` | **Implemented, runs live** with the `GEMINI_API_KEY` repo secret. Uses `google-generativeai`, which Google no longer supports. |
 | Knowledge base (strategy, universe, sources, platform, decision and output frameworks) | `knowledge/` | Written; loaded into the prompt. |
 | **Source-locked package + validation + approval gate** (new) | `content_engine/` | **Implemented, 37 tests, and run live** (see section 1a). Approval has only been exercised on test data, never on a live package. |
-| Publishing to Facebook / LinkedIn / Instagram | not in this repo | **Not implemented here.** Your n8n Facebook publisher is outside this repo, so this document cannot confirm it has ever posted live. |
+| Publishing to Facebook, Instagram, Threads, LinkedIn, YouTube (new) | `content_engine/publish.py`, `.github/workflows/publish.yml` | **Implemented and tested against simulated APIs only (dry run + mocked tests). Nothing has been posted live yet**, because no platform tokens exist. Runs automatically after approval; platforms without secrets are skipped. Your separate n8n Facebook publisher is still unverified. |
 | Carousel image rendering (new) | `content_engine/render.py` | **Implemented and run live:** 6 branded 1080×1080 PNGs from the validated slide text, at $0 per image. |
 | Scheduling | `.github/workflows/daily-content.yml` | Manual trigger only (`workflow_dispatch`); there is no cron schedule. |
 | Reporting / analytics | not implemented | None. |
@@ -94,7 +94,15 @@ GitHub Actions (all manual, none publish):
 - **Approve Content Package**: only repo writers can run it. It records your GitHub
   username, and you must tick the box confirming you checked the flags.
 
-## 3. Contract for the existing n8n / Facebook flow (no replacement)
+## 3. Publishing contract (GitHub publisher, or n8n if you keep it)
+
+Update 2026-11-24: the repo now has its own cloud publisher (`publish.yml`), because you
+asked for posting that works without your laptop and the n8n flow isn't reachable from the
+cloud. It obeys the rule below. n8n can still be used instead for any platform; just leave
+that platform's GitHub secrets empty so the GitHub publisher skips it. Setup is in
+`docs/SOCIAL_ACCESS.md`.
+
+### Original n8n contract
 
 n8n keeps doing what it does. It reads `output/packages/<date>/package.json` and publishes **only if all** of these hold:
 
@@ -119,7 +127,12 @@ Prices are approximate and need checking before you decide.
 | Visibility | n8n UI shows each execution. | Logs in Actions; no visual editor. |
 | SaaS path | n8n licensing limits embedding it in a commercial SaaS; check the Sustainable Use License before you productise. | Cleaner for SaaS later. |
 
-**Recommendation:** keep n8n for the pilot. Revisit only if (a) n8n Cloud fees exceed
+**Update 2026-11-24:** you asked for fully cloud posting without your laptop. The
+GitHub publisher is now built, so the "build effort" column is already paid. Running cost
+is $0, and the remaining risk is tokens in GitHub Secrets (encrypted, write-only).
+n8n stays optional per platform.
+
+**Original recommendation:** keep n8n for the pilot. Revisit only if (a) n8n Cloud fees exceed
 about $20/mo with no self-host option, or (b) you start building the SaaS. The package
 contract above means a later migration only swaps the publisher, not the research and
 validation.

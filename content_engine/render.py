@@ -88,7 +88,44 @@ def render_slides(pkg: dict, folder: str) -> list[str]:
             if overflow:
                 raise ValueError(f"slide {i} text does not fit on the image")
             png = os.path.join(out_dir, f"slide-{i}.png")
-            page.screenshot(path=png, clip={"x": 0, "y": 0, "width": SIZE, "height": SIZE})
+            clip = {"x": 0, "y": 0, "width": SIZE, "height": SIZE}
+            page.screenshot(path=png, clip=clip)
+            # JPEG copy for publishing: Instagram accepts JPEG only.
+            page.screenshot(path=os.path.join(out_dir, f"slide-{i}.jpg"), clip=clip, type="jpeg", quality=90)
             paths.append(png)
         browser.close()
     return paths
+
+
+def build_short(folder: str, seconds_per_slide: int = 4) -> str | None:
+    """Vertical 1080x1920 slideshow MP4 (YouTube Shorts) from slides/slide-N.jpg.
+
+    Returns the path, or None when ffmpeg is not installed.
+    """
+    import shutil
+    import subprocess
+
+    if not shutil.which("ffmpeg"):
+        return None
+    slides_dir = os.path.join(folder, "slides")
+    jpgs = sorted(
+        (f for f in os.listdir(slides_dir) if f.startswith("slide-") and f.endswith(".jpg")),
+        key=lambda f: int(f[6:-4]),
+    )
+    if not jpgs:
+        return None
+    out = os.path.join(folder, "short.mp4")
+    cmd = ["ffmpeg", "-y", "-loglevel", "error"]
+    for f in jpgs:
+        cmd += ["-loop", "1", "-t", str(seconds_per_slide), "-i", os.path.join(slides_dir, f)]
+    chains = "".join(
+        f"[{i}:v]scale={SIZE}:{SIZE},pad={SIZE}:1920:0:420:white,setsar=1,fps=30[v{i}];" for i in range(len(jpgs))
+    )
+    joined = "".join(f"[v{i}]" for i in range(len(jpgs)))
+    cmd += [
+        "-filter_complex", f"{chains}{joined}concat=n={len(jpgs)}:v=1:a=0,format=yuv420p[v]",
+        "-map", "[v]", "-c:v", "libx264", "-tune", "stillimage", "-crf", "28",
+        "-movflags", "+faststart", "-map_metadata", "-1", out,
+    ]
+    subprocess.run(cmd, check=True)
+    return out

@@ -7,6 +7,8 @@
   python -m content_engine check PATH              # exit 0 only if safe to publish
   python -m content_engine render PATH             # carousel PNGs into <package>/slides/
   python -m content_engine sources                 # live feed check only (no API key)
+  python -m content_engine publish PATH|--latest-approved [--platforms facebook,instagram,...] [--dry-run]
+  python -m content_engine check-access            # read-only token check for every configured platform
 
 Nothing in this package posts to any social network.
 """
@@ -73,22 +75,97 @@ def generate(args) -> int:
     for e in v["errors"]:
         print(f"  ERROR {e}")
     if args.render and not v["errors"]:
-        from .render import render_slides
-
-        print(f"Rendered {len(render_slides(pkg, folder))} slide images into {folder}/slides/")
+        _render_media(pkg, folder)
     return 1 if v["errors"] else 0
 
 
-def render(args) -> int:
-    from .render import render_slides
+def _render_media(pkg: dict, folder: str) -> None:
+    """Slides (PNG + JPEG), Shorts video, then bind their hashes into the package."""
+    from .render import build_short, render_slides
 
+    n = len(render_slides(pkg, folder))
+    video = build_short(folder)
+    pk.attach_media(pkg, folder)
+    pk.save(pkg, os.path.join(folder, "package.json"))
+    with open(os.path.join(folder, "review.md"), "w", encoding="utf-8") as f:
+        f.write(pk.review_markdown(pkg))
+    print(f"Rendered {n} slide images" + (" and short.mp4" if video else " (no ffmpeg: no video)") + f" into {folder}")
+    print("Media hashes recorded; approval (if any) was cleared and must be given again.")
+
+
+def render(args) -> int:
     path = os.path.abspath(args.path)
     pkg = pk.load(path)
     if pkg["validation"]["errors"]:
         print("Package has validation errors; not rendering.")
         return 1
-    print(f"Rendered {len(render_slides(pkg, os.path.dirname(path)))} slide images")
+    _render_media(pkg, os.path.dirname(path))
     return 0
+
+
+def _find_latest_approved(root: str) -> str | None:
+    if not os.path.isdir(root):
+        return None
+    for name in sorted(os.listdir(root), reverse=True):
+        path = os.path.join(root, name, "package.json")
+        if name.endswith("-dry-run") or not os.path.exists(path):
+            continue
+        if pk.is_publishable(pk.load(path))[0]:
+            return path
+    return None
+
+
+def publish(args) -> int:
+    from . import publish as pub
+
+    path = _find_latest_approved(args.root) if args.latest_approved else args.path
+    if not path:
+        print("No approved, unchanged package found. Nothing to publish.")
+        return 0
+    path = os.path.abspath(path)
+    folder = os.path.dirname(path)
+    pkg = pk.load(path)
+    platforms = [p.strip() for p in args.platforms.split(",") if p.strip()]
+    if args.dry_run:
+        gate, outcome, calls = pub.dry_run(pkg, folder, platforms)
+        print(f"DRY RUN (no network). Approval gate: {gate}")
+        for c in calls:
+            print("  " + c)
+        for p, o in outcome.items():
+            print(f"{p:10} {o}")
+        return 0
+    base = os.environ.get("MEDIA_BASE_URL")
+    if not base and os.environ.get("MEDIA_ROOT_URL"):
+        rel = os.path.relpath(folder, os.getcwd()).replace(os.sep, "/")
+        base = os.environ["MEDIA_ROOT_URL"].rstrip("/") + "/" + rel
+
+    def save(p):
+        pk.save(p, path)
+        with open(os.path.join(folder, "review.md"), "w", encoding="utf-8") as f:
+            f.write(pk.review_markdown(p))
+
+    import requests
+
+    try:
+        outcome = pub.publish_package(pkg, folder, platforms, os.environ, requests.Session(), base, save=save)
+    except pub.PublishError as exc:
+        print(str(exc))
+        return 1
+    print(f"Package: {path}")
+    for p, o in outcome.items():
+        print(f"{p:10} {o}")
+    return 1 if any(o.startswith("FAILED") for o in outcome.values()) else 0
+
+
+def check_access(args) -> int:
+    import requests
+
+    from . import publish as pub
+
+    results = pub.check_access(os.environ, requests.Session())
+    for p, r in results.items():
+        print(f"{p:10} {r}")
+    return 1 if any(r.startswith("FAILED") for r in results.values()) else 0
 
 
 def sources(args) -> int:
@@ -152,6 +229,15 @@ def main(argv=None) -> int:
     rd = sub.add_parser("render")
     rd.add_argument("path")
     rd.set_defaults(fn=render)
+    pb = sub.add_parser("publish")
+    pb.add_argument("path", nargs="?")
+    pb.add_argument("--latest-approved", action="store_true")
+    pb.add_argument("--root", default="output/packages")
+    pb.add_argument("--platforms", default="facebook,instagram,threads,linkedin,youtube")
+    pb.add_argument("--dry-run", action="store_true")
+    pb.set_defaults(fn=publish)
+    ca = sub.add_parser("check-access")
+    ca.set_defaults(fn=check_access)
     so = sub.add_parser("sources")
     so.add_argument("--feeds", default="news_sources.txt")
     so.add_argument("--max-age-hours", type=int, default=48)

@@ -1,0 +1,82 @@
+name: Publish Approved Content
+
+# Runs automatically after "Approve Content Package" succeeds, or manually.
+# Posts ONLY a package that is approved and unchanged since approval.
+# Platforms without their secrets are skipped. Each platform is posted once per package.
+on:
+  workflow_run:
+    workflows: ["Approve Content Package"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      package_date:
+        description: "Package date (YYYY-MM-DD). Leave empty for the latest approved package."
+        required: false
+      platforms:
+        description: "Comma-separated platforms"
+        default: "facebook,instagram,threads,linkedin,youtube"
+      dry_run:
+        description: "Dry run: show the API calls without posting"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Publish
+        env:
+          PKG_DATE: ${{ inputs.package_date }}
+          PLATFORMS: ${{ inputs.platforms || 'facebook,instagram,threads,linkedin,youtube' }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_API_HOST: ${{ vars.IG_API_HOST || 'graph.instagram.com' }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
+          LINKEDIN_AUTHOR: ${{ secrets.LINKEDIN_AUTHOR }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_PRIVACY: ${{ vars.YT_PRIVACY || 'public' }}
+          # Public, immutable copies of the approved images (pinned to this commit).
+          MEDIA_ROOT_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+        run: |
+          ARGS="--latest-approved"
+          if [ -n "$PKG_DATE" ]; then
+            case "$PKG_DATE" in
+              [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+              *) echo "package_date must look like YYYY-MM-DD"; exit 1 ;;
+            esac
+            ARGS="output/packages/$PKG_DATE/package.json"
+          fi
+          if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          python -m content_engine publish $ARGS --platforms "$PLATFORMS"
+      - name: Record what was published
+        if: always() && inputs.dry_run != true
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add output/packages/
+          git commit -m "Record published posts" || echo "Nothing to record"
+          git pull --rebase
+          git push

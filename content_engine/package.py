@@ -34,19 +34,67 @@ def strip_hashtags(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
 
+THREADS_MAX = 500
+YOUTUBE_TITLE_MAX = 100
+
+
+def _fit(text: str, limit: int) -> str:
+    """Trim at a word boundary so text + ellipsis fits `limit` characters."""
+    if len(text) <= limit:
+        return text
+    cut = text[: limit - 1].rsplit(" ", 1)[0].rstrip(" ,.;:-")
+    return cut + "…"
+
+
 def render_posts(draft: dict, story: dict) -> dict:
     """Final platform text: model copy + the verified source citation.
-    Only the 20 validated hashtags are used, once, on Instagram."""
-    tags = " ".join(draft.get("hashtags") or [])
+    Only the 20 validated hashtags are used, once, on Instagram.
+    Threads and YouTube text is derived from already-validated copy."""
+    tags = draft.get("hashtags") or []
+    slides = draft.get("carousel") or []
+    src = _source_line(story)
+    threads_body = "\n\n".join(strip_hashtags(s) for s in slides[:1] + slides[2:3])
+    threads = f"{_fit(threads_body, THREADS_MAX - len(src) - 2)}\n\n{src}"
+    yt_title = _fit(strip_hashtags(slides[0]) if slides else story["title"], YOUTUBE_TITLE_MAX - len(" #Shorts"))
     return {
-        "linkedin": f"{strip_hashtags(draft['linkedin'])}\n\n{_source_line(story)}",
-        "facebook": f"{strip_hashtags(draft['facebook'])}\n\n{_source_line(story)}",
-        "instagram": f"{strip_hashtags(draft['instagram'])}\n\n{_source_line(story, with_url=False)}\n\n{tags}",
+        "linkedin": f"{strip_hashtags(draft['linkedin'])}\n\n{src}",
+        "facebook": f"{strip_hashtags(draft['facebook'])}\n\n{src}",
+        "instagram": f"{strip_hashtags(draft['instagram'])}\n\n{_source_line(story, with_url=False)}\n\n{' '.join(tags)}",
+        "threads": threads,
+        "youtube": {
+            "title": f"{yt_title} #Shorts",
+            "description": f"{strip_hashtags(draft['facebook'])}\n\n{src}\n\n{' '.join(tags[:3])}",
+            "tags": [t.lstrip("#") for t in tags[:15]],
+        },
     }
 
 
+def file_sha256(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 16), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def attach_media(pkg: dict, folder: str) -> dict:
+    """Record rendered media (paths relative to the package folder + SHA-256)
+    so the approval covers the exact image/video bytes that will be posted."""
+    slides_dir = os.path.join(folder, "slides")
+    jpgs = sorted(
+        (f for f in os.listdir(slides_dir) if f.startswith("slide-") and f.endswith(".jpg")),
+        key=lambda f: int(f[6:-4]),
+    ) if os.path.isdir(slides_dir) else []
+    media = {"images": [{"file": f"slides/{f}", "sha256": file_sha256(os.path.join(slides_dir, f))} for f in jpgs]}
+    video = os.path.join(folder, "short.mp4")
+    if os.path.exists(video):
+        media["video"] = {"file": "short.mp4", "sha256": file_sha256(video)}
+    pkg["media"] = media
+    return rehash(pkg)
+
+
 def content_hash(pkg: dict) -> str:
-    publishable = {k: pkg.get(k) for k in ("story", "carousel", "posts", "hashtags", "image_prompts")}
+    publishable = {k: pkg.get(k) for k in ("story", "carousel", "posts", "hashtags", "image_prompts", "media")}
     blob = json.dumps(publishable, sort_keys=True, ensure_ascii=False).encode()
     return hashlib.sha256(blob).hexdigest()
 
@@ -87,6 +135,8 @@ def build_package(draft: dict, candidates: list[dict], run_mode: str, now: datet
         "candidates_considered": len(candidates),
         "status": "rejected" if errors else "pending_review",
         "approval": None,
+        "media": None,
+        "published": {},
     }
     pkg["content_sha256"] = content_hash(pkg)
     return pkg
@@ -164,8 +214,20 @@ def review_markdown(pkg: dict) -> str:
     for i, slide in enumerate(pkg.get("carousel") or [], start=1):
         lines.append(f"{i}. {slide}")
     if pkg.get("posts"):
-        for name in ("linkedin", "facebook", "instagram"):
-            lines += ["", f"## {name.title()}", "", pkg["posts"][name]]
+        for name in ("linkedin", "facebook", "instagram", "threads"):
+            if name in pkg["posts"]:
+                lines += ["", f"## {name.title()}", "", pkg["posts"][name]]
+        yt = pkg["posts"].get("youtube")
+        if yt:
+            lines += ["", "## YouTube Short", "", f"**Title:** {yt['title']}", "", yt["description"]]
+    media = pkg.get("media") or {}
+    if media.get("images"):
+        lines += ["", "## Media (covered by approval)", *[f"- {m['file']} `{m['sha256'][:12]}`" for m in media["images"]]]
+        if media.get("video"):
+            lines.append(f"- {media['video']['file']} `{media['video']['sha256'][:12]}`")
+    published = pkg.get("published") or {}
+    if published:
+        lines += ["", "## Published", *[f"- {k}: {v.get('url') or v.get('id')} ({v.get('at', '')[:16]})" for k, v in published.items()]]
     lines += ["", "## Image prompts", *[f"{i}. {p}" for i, p in enumerate(pkg.get("image_prompts") or [], 1)]]
     if pkg.get("feed_errors"):
         lines += ["", "## Feed errors", *[f"- {e}" for e in pkg["feed_errors"]]]
