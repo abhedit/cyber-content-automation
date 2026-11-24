@@ -58,8 +58,15 @@ jobs:
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           YT_PRIVACY: ${{ vars.YT_PRIVACY || 'public' }}
-          # Public, immutable copies of the approved images (pinned to this commit).
-          MEDIA_ROOT_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+          # Instagram/Threads need public image URLs. The repo is private, so approved
+          # images are uploaded to Cloudflare R2 at publish time (drafts stay private).
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          # Fallback only if the repo is public again: raw URLs pinned to this commit.
+          MEDIA_ROOT_URL: ${{ github.event.repository.private && '' || format('https://raw.githubusercontent.com/{0}/{1}', github.repository, github.sha) }}
         run: |
           ARGS="--latest-approved"
           if [ -n "$PKG_DATE" ]; then

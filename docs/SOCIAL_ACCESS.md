@@ -14,7 +14,7 @@ GitHub Actions (free, cloud)
   Social Access Check (every Monday) ──> emails you if any token stopped working
 ```
 
-- Your tokens are stored as **GitHub Secrets**. You paste them in GitHub's settings page;
+- Your tokens are stored as **GitHub Secrets** (works for private repos). You paste them in GitHub's settings page;
   GitHub encrypts them, and nobody (including Claude) can read them back.
 - Nothing posts until **you** run *Approve Content Package*, and only if the content,
   images and video are unchanged since approval.
@@ -32,6 +32,7 @@ GitHub → repository **abhedit/cyber-content-automation** → **Settings → Se
 | Threads | `THREADS_TOKEN`, `THREADS_USER_ID` |
 | LinkedIn | `LINKEDIN_TOKEN`, `LINKEDIN_AUTHOR` |
 | YouTube | `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` |
+| Image hosting for Instagram and Threads | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` |
 
 **You don't need to hunt for the IDs.** Add the token first, then run **Actions → Social
 Access Check → Run workflow**. It prints the account name and the exact ID value to save,
@@ -48,6 +49,29 @@ Never paste tokens into chat, email, Slack, n8n notes or any file in the repo.
 - Two-factor login turned on for all accounts.
 
 ---
+
+## 0. GitHub itself (do this first)
+
+The repository is **private**, as of 2026-11-24. Two consequences:
+
+1. **Actions minutes.** Private repos use your plan's free Actions minutes; the Free plan
+   includes 2,000 a month, and this system uses roughly 3–5 minutes a day. On 2026-11-24
+   every run failed instantly without starting, which usually means a billing problem or a
+   $0 spending limit/quota block. Check **github.com → Settings → Billing and plans → Usage
+   / Spending limits**, and open a failed run in the Actions tab to read GitHub's exact message.
+2. **Image hosting.** Private repo files aren't public, so Instagram and Threads can't
+   download the slides from GitHub. Facebook, LinkedIn and YouTube upload the files directly
+   and don't need this. Set up Cloudflare R2 (free up to 10 GB):
+   1. dash.cloudflare.com → **R2 → Create bucket** `abhedit-media`.
+   2. Bucket → **Settings → Public access → enable the r2.dev subdomain** (or connect a
+      domain such as `media.abhedit.com`). Copy the public URL: `R2_PUBLIC_BASE_URL`.
+   3. **R2 → Manage API tokens → Create token** with *Object Read & Write* on this bucket
+      only. Save the Access Key ID and Secret as `R2_ACCESS_KEY_ID` and
+      `R2_SECRET_ACCESS_KEY`; your account ID (shown on the R2 page) as `R2_ACCOUNT_ID`;
+      and `abhedit-media` as `R2_BUCKET`.
+
+   Only **approved** images are uploaded, at the moment of publishing. Drafts never leave
+   the private repo.
 
 ## 1. Facebook Page
 

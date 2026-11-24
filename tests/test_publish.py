@@ -105,12 +105,56 @@ def test_swapping_an_image_after_approval_is_caught(approved):
     assert not any("rest/posts" in u for _, u, _ in http.raw)
 
 
-def test_tampered_public_copy_blocks_meta_platforms(approved):
+def test_tampered_public_copy_blocks_instagram_and_threads(approved):
     pkg, folder = approved
     http = FakeHttp(folder, tamper=True)
-    out = run(pkg, folder, http, ["facebook", "instagram", "threads"])
+    out = run(pkg, folder, http, ["instagram", "threads"])
     assert all("public copy" in o for o in out.values()), out
     assert not any(m == "POST" for m, _, _ in http.raw)  # nothing was sent to any platform
+
+
+def test_facebook_uploads_verified_bytes_without_public_urls(approved):
+    pkg, folder = approved
+    http = FakeHttp(folder)
+    out = pub.publish_package(pkg, folder, ["facebook"], ENV, http, None, sleep=lambda s: None)
+    assert out["facebook"].startswith("published")
+    uploads = [kw for m, u, kw in http.raw if u.endswith("/123/photos")]
+    assert len(uploads) == 6 and uploads[0]["files"]["source"][1] == b"jpeg-1"
+    assert "url" not in uploads[0]["data"]
+
+
+def test_r2_hosting_uploads_each_approved_image_once(approved):
+    pkg, folder = approved
+    stored = {}
+
+    def uploader(key, data):
+        stored[key] = data
+        return f"{BASE}/{key}"
+
+    class R2Http(FakeHttp):
+        def request(self, method, url, **kw):
+            if method == "GET" and url.startswith(BASE):
+                self.raw.append((method, url, kw))
+
+                class R:
+                    status_code, headers, text = 200, {}, ""
+                r = R()
+                r.content = stored[url[len(BASE) + 1:]]
+                return r
+            return super().request(method, url, **kw)
+
+    http = R2Http(folder)
+    out = pub.publish_package(pkg, folder, ["instagram", "threads"], ENV, http, None,
+                              sleep=lambda s: None, uploader=uploader)
+    assert all(o.startswith("published") for o in out.values()), out
+    assert len(stored) == 6  # shared by Instagram and Threads, uploaded once
+    assert all(k.startswith("abhedit/2026-01-15/") for k in stored)
+
+
+def test_no_image_hosting_fails_clearly(approved):
+    pkg, folder = approved
+    out = pub.publish_package(pkg, folder, ["instagram"], ENV, FakeHttp(folder), None, sleep=lambda s: None)
+    assert "no public image hosting configured" in out["instagram"]
 
 
 def test_unconfigured_platforms_are_skipped(approved):

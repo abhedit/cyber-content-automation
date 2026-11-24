@@ -2,3 +2,4 @@ google-generativeai
 feedparser
 requests
 google-genai
+boto3

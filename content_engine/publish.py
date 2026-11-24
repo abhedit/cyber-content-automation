@@ -14,7 +14,11 @@ Configuration (environment variables; a platform without its variables is skippe
   Threads   THREADS_USER_ID, THREADS_TOKEN
   LinkedIn  LINKEDIN_TOKEN, LINKEDIN_AUTHOR (urn:li:person:... or urn:li:organization:...)
   YouTube   YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN   (YT_PRIVACY: public|unlisted|private)
-  Shared    MEDIA_BASE_URL (public URL of the package folder), META_GRAPH_VERSION, LINKEDIN_VERSION
+  Images    Instagram/Threads fetch images from a public URL. Either
+            R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_BASE_URL
+            (Cloudflare R2: only approved images are uploaded at publish time), or
+            MEDIA_BASE_URL / MEDIA_ROOT_URL (public repo raw URLs).
+  Shared    META_GRAPH_VERSION, LINKEDIN_VERSION
 """
 
 from __future__ import annotations
@@ -35,7 +39,7 @@ REQUIRED = {
     "linkedin": ["LINKEDIN_TOKEN", "LINKEDIN_AUTHOR"],
     "youtube": ["YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN"],
 }
-NEEDS_PUBLIC_URLS = {"facebook", "instagram", "threads"}
+NEEDS_PUBLIC_URLS = {"instagram", "threads"}
 LINKEDIN_RESERVED = "\\|{}@[]()<>#*_~"
 INSTAGRAM_CAPTION_MAX = 2200
 LINKEDIN_COMMENTARY_MAX = 3000
@@ -81,8 +85,10 @@ def _sha(data: bytes) -> str:
 class Media:
     """Approved media: local bytes + public URLs, all verified against approval hashes."""
 
-    def __init__(self, pkg: dict, folder: str, base_url: str | None, http):
+    def __init__(self, pkg: dict, folder: str, base_url: str | None, http, uploader=None):
         self.pkg, self.folder, self.base_url, self.http = pkg, folder, (base_url or "").rstrip("/"), http
+        self.uploader = uploader  # callable(key, bytes) -> public URL (e.g. Cloudflare R2)
+        self._urls: list[str] | None = None
         self.images = (pkg.get("media") or {}).get("images") or []
         self.video = (pkg.get("media") or {}).get("video")
         self._checked_urls: set[str] = set()
@@ -97,17 +103,26 @@ class Media:
     def public_urls(self) -> list[str]:
         if not self.images:
             raise PublishError("package has no rendered images (run render before approval)")
-        if not self.base_url:
-            raise PublishError("MEDIA_BASE_URL is not set; Meta needs public image URLs")
+        if self._urls is not None:
+            return self._urls
+        if not self.uploader and not self.base_url:
+            raise PublishError("no public image hosting configured (set the R2_* secrets)")
         urls = []
         for item in self.images:
-            url = f"{self.base_url}/{item['file']}"
+            if self.uploader:
+                # Upload the verified approved bytes; the key includes the hash so it never collides.
+                date = (self.pkg.get("generated_at") or "")[:10]
+                key = f"abhedit/{date}/{item['sha256'][:16]}-{os.path.basename(item['file'])}"
+                url = self.uploader(key, self.local_bytes(item))
+            else:
+                url = f"{self.base_url}/{item['file']}"
             if url not in self._checked_urls:
                 resp = _call(self.http, "GET", url, f"fetch public copy of {item['file']}")
                 if _sha(resp.content) != item["sha256"]:
                     raise PublishError(f"public copy of {item['file']} differs from the approved file")
                 self._checked_urls.add(url)
             urls.append(url)
+        self._urls = urls
         return urls
 
 
@@ -127,10 +142,13 @@ def _wait_ready(http, url: str, params: dict, field: str, done: str, what: str, 
 def post_facebook(pkg, media: Media, env, http, sleep) -> dict:
     g = f"https://graph.facebook.com/{env.get('META_GRAPH_VERSION', 'v25.0')}"
     page, token = env["FB_PAGE_ID"], env["FB_PAGE_TOKEN"]
+    if not media.images:
+        raise PublishError("package has no rendered images")
     photo_ids = []
-    for url in media.public_urls():
+    for item in media.images:  # direct upload of verified bytes: no public URL needed
         r = _call(http, "POST", f"{g}/{page}/photos", "facebook photo upload",
-                  data={"url": url, "published": "false", "access_token": token})
+                  data={"published": "false", "access_token": token},
+                  files={"source": (os.path.basename(item["file"]), media.local_bytes(item), "image/jpeg")})
         photo_ids.append(r.json()["id"])
     data = {"message": pkg["posts"]["facebook"], "access_token": token}
     for i, pid in enumerate(photo_ids):
@@ -260,13 +278,13 @@ POSTERS = {
 
 
 def publish_package(pkg: dict, folder: str, platforms: list[str], env, http, base_url: str | None,
-                    save=None, sleep=time.sleep, now=None) -> dict[str, str]:
+                    save=None, sleep=time.sleep, now=None, uploader=None) -> dict[str, str]:
     """Post to each platform. Returns {platform: outcome}. Raises if the package is not publishable."""
     ok, reason = pk.is_publishable(pkg)
     if not ok:
         raise PublishError(f"refusing to publish: {reason}")
     pkg.setdefault("published", {})
-    media = Media(pkg, folder, base_url, http)
+    media = Media(pkg, folder, base_url, http, uploader)
     outcome = {}
     for platform in platforms:
         if platform not in POSTERS:
@@ -385,6 +403,7 @@ class RecordingHttp:
         if url.endswith("/rest/posts"):
             r.status_code, r.headers = 201, {"x-restli-id": "urn:li:share:dry"}
         fields = sorted((kw.get("data") or kw.get("json") or kw.get("params") or {}).keys()) if not isinstance(kw.get("data"), bytes) else ["<file bytes>"]
+        fields += ["<file bytes>"] if kw.get("files") else []
         fields = [f for f in fields if f not in ("access_token", "client_secret", "refresh_token")]
         self.calls.append(f"{method:4} {url.split('?')[0]}  {fields}")
         return r
@@ -410,3 +429,26 @@ def dry_run(pkg: dict, folder: str, platforms: list[str]) -> tuple[str, dict, li
         except PublishError as exc:
             outcome[p] = f"would FAIL: {exc}"
     return ("PUBLISHABLE" if gate[0] else f"BLOCKED ({gate[1]})"), outcome, http.calls
+
+
+def r2_uploader(env):
+    """Cloudflare R2 (S3-compatible) uploader, or None when R2 is not configured."""
+    keys = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_BASE_URL"]
+    if not all(env.get(k) for k in keys):
+        return None
+    import boto3
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=f"https://{env['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+        aws_access_key_id=env["R2_ACCESS_KEY_ID"],
+        aws_secret_access_key=env["R2_SECRET_ACCESS_KEY"],
+        region_name="auto",
+    )
+    base = env["R2_PUBLIC_BASE_URL"].rstrip("/")
+
+    def upload(key: str, data: bytes) -> str:
+        s3.put_object(Bucket=env["R2_BUCKET"], Key=key, Body=data, ContentType="image/jpeg")
+        return f"{base}/{key}"
+
+    return upload

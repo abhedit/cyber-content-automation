@@ -147,7 +147,8 @@ def publish(args) -> int:
     import requests
 
     try:
-        outcome = pub.publish_package(pkg, folder, platforms, os.environ, requests.Session(), base, save=save)
+        outcome = pub.publish_package(pkg, folder, platforms, os.environ, requests.Session(), base, save=save,
+                                      uploader=pub.r2_uploader(os.environ))
     except pub.PublishError as exc:
         print(str(exc))
         return 1
